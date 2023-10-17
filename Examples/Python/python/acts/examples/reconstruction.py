@@ -1161,7 +1161,7 @@ def addTrackSelection(
     return trackSelector
 
 
-ExaTrkXBackend = Enum("ExaTrkXBackend", "Torch Onnx")
+ExaTrkXBackend = Enum("ExaTrkXBackend", "Torch Onnx Triton")
 
 
 def addExaTrkX(
@@ -1249,6 +1249,22 @@ def addExaTrkX(
             acts.examples.OnnxEdgeClassifier(**gnnConfig),
         ]
         trackBuilder = acts.examples.CugraphTrackBuilding(customLogLevel())
+    elif backend == ExaTrkXBackend.Triton:
+        metricLearningConfig["modelPath"] = str(modelDir / "embed.pt")
+        metricLearningConfig["numFeatures"] = 3
+        filterConfig["modelPath"] = str(modelDir / "filter.pt")
+        filterConfig["nChunks"] = 10
+        filterConfig["numFeatures"] = 3
+        gnnConfig["modelPath"] = str(modelDir / "gnn.pt")
+        gnnConfig["undirected"] = True
+        gnnConfig["numFeatures"] = 3
+
+        graphConstructor = acts.examples.TorchMetricLearning(**metricLearningConfig)
+        edgeClassifiers = [
+            acts.examples.TorchEdgeClassifier(**filterConfig),
+            acts.examples.TorchEdgeClassifier(**gnnConfig),
+        ]
+        trackBuilder = acts.examples.BoostTrackBuilding(customLogLevel())        
 
     s.addAlgorithm(
         acts.examples.TrackFindingAlgorithmExaTrkX(

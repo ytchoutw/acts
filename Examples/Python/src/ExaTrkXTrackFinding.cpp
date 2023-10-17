@@ -20,6 +20,7 @@
 #include "ActsExamples/TrackFinding/SpacePointMaker.hpp"
 #include "ActsExamples/TrackFinding/TrackFindingAlgorithm.hpp"
 #include "ActsExamples/TrackFindingExaTrkX/TrackFindingAlgorithmExaTrkX.hpp"
+#include "ActsExamples/TrackFindingExaTrkXTriton/TrackFindingAlgorithmExaTrkXTriton.hpp"
 
 #include <memory>
 
@@ -170,6 +171,13 @@ void addExaTrkXTrackFinding(Context &ctx) {
   ACTS_PYTHON_DECLARE_ALGORITHM(
       ActsExamples::TrackFindingAlgorithmExaTrkX, mex,
       "TrackFindingAlgorithmExaTrkX", inputSpacePoints, inputSimHits,
+      inputParticles, inputMeasurementSimhitsMap, outputProtoTracks,
+      graphConstructor, edgeClassifiers, trackBuilder, rScale, phiScale, zScale,
+      targetMinHits, targetMinPT);
+
+  ACTS_PYTHON_DECLARE_ALGORITHM(
+      ActsExamples::TrackFindingAlgorithmExaTrkXTriton, mex,
+      "TrackFindingAlgorithmExaTrkXTriton", inputSpacePoints, inputSimHits,
       inputParticles, inputMeasurementSimhitsMap, outputProtoTracks,
       graphConstructor, edgeClassifiers, trackBuilder, rScale, phiScale, zScale,
       targetMinHits, targetMinPT);
