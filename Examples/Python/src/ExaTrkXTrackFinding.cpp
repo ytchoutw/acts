@@ -177,10 +177,10 @@ void addExaTrkXTrackFinding(Context &ctx) {
 
   ACTS_PYTHON_DECLARE_ALGORITHM(
       ActsExamples::TrackFindingAlgorithmExaTrkXTriton, mex,
-      "TrackFindingAlgorithmExaTrkXTriton", inputSpacePoints, inputSimHits,
-      inputParticles, inputMeasurementSimhitsMap, outputProtoTracks,
-      graphConstructor, edgeClassifiers, trackBuilder, rScale, phiScale, zScale,
-      targetMinHits, targetMinPT);
+      "TrackFindingAlgorithmExaTrkXTriton", tritonModelName, tritonServerUrl, inputSpacePoints,
+      inputSimHits, inputParticles, inputMeasurementSimhitsMap,
+      outputProtoTracks, graphConstructor, edgeClassifiers, trackBuilder,
+      rScale, phiScale, zScale, targetMinHits, targetMinPT);
 
   {
     auto cls =

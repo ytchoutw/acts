@@ -13,6 +13,9 @@ target_link_libraries(
   PUBLIC
     ActsPluginExaTrkX
     ActsExamplesFramework
+  PRIVATE
+    libgrpcclient.so
+    libprotobuf.a    
 )
 
 install(

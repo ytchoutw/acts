@@ -18,6 +18,7 @@
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/DataHandle.hpp"
 #include "ActsExamples/Framework/IAlgorithm.hpp"
+#include "ActsExamples/TrackFindingExaTrkXTriton/ExaTrkXTriton.hpp"
 
 #include <string>
 #include <vector>
@@ -27,6 +28,12 @@ namespace ActsExamples {
 class TrackFindingAlgorithmExaTrkXTriton final : public IAlgorithm {
  public:
   struct Config {
+    /// Triton model name (Optional).
+    std::string tritonModelName;
+
+    /// Triton server url (Optional).
+    std::string tritonServerUrl;
+
     /// Input spacepoints collection.
     std::string inputSpacePoints;
 
@@ -85,9 +92,16 @@ class TrackFindingAlgorithmExaTrkXTriton final : public IAlgorithm {
 
   const Config& config() const { return m_cfg; }
 
+  std::vector<std::vector<int>> getTracks(
+      std::vector<float>& features, std::vector<int>& spacepointIDs,
+      const std::size_t& numSpacepoints, const std::size_t& numFeatures) const;
+
  private:
   // configuration
   Config m_cfg;
+
+  // inference mode
+  bool m_use_triton = false;
 
   Acts::ExaTrkXPipeline m_pipeline;
 
@@ -97,6 +111,8 @@ class TrackFindingAlgorithmExaTrkXTriton final : public IAlgorithm {
 
   WriteDataHandle<ProtoTrackContainer> m_outputProtoTracks{this,
                                                            "OutputProtoTracks"};
+  // for triton inference
+  std::unique_ptr<ExaTrkXTriton> m_client;
 
   // for truth graph
   ReadDataHandle<SimHitContainer> m_inputSimHits{this, "InputSimHits"};
