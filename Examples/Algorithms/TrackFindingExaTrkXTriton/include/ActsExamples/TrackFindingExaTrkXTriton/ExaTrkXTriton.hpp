@@ -73,8 +73,9 @@ class ExaTrkXTriton {
       return true;
     }
 
-    void ClearInput() {
+    bool ClearInput() {
       inputs_.clear();
+      return true;
     }
 
     template <typename T>

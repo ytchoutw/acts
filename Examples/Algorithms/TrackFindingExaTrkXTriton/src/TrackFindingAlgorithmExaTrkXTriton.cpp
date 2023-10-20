@@ -15,7 +15,7 @@
 #include "ActsExamples/EventData/ProtoTrack.hpp"
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
-#include "ActsExamples/TrackFindingExaTrkXTriton/ExaTrkXTriton.hpp"
+#include "ActsExamples/TrackFindingExaTrkXTriton/ExaTrkXTrackFindingTriton.hpp"
 
 #include <numeric>
 
@@ -159,16 +159,13 @@ ActsExamples::TrackFindingAlgorithmExaTrkXTriton::
     if (!m_cfg.tritonServerUrl.empty()){
       //Set to run using triton
       m_use_triton = true;
-      ACTS_INFO("m_cfg.tritonServerUrl = " << m_cfg.tritonServerUrl)
-
-      // Need to move to configurable
       bool verbose = false;
-      uint32_t client_timeout = 0;
-      std::string model_version = "";
+      ACTS_INFO("m_cfg.tritonServerUrl = " << m_cfg.tritonServerUrl)
+      std::string tritonModelName = m_cfg.tritonModelName;
+      std::string tritonServerUrl = m_cfg.tritonServerUrl;
 
-      m_client = std::make_unique<ExaTrkXTriton>(
-          m_cfg.tritonModelName, m_cfg.tritonServerUrl, model_version,
-          client_timeout, verbose);
+      ExaTrkXTrackFindingTriton::TritonConfig triton_config{tritonModelName, tritonServerUrl, verbose};
+      m_infer = std::make_unique<ExaTrkXTrackFindingTriton>(triton_config);
 
       ACTS_INFO("Running Inference with ExaTrkX as a service.")
     }
@@ -185,51 +182,6 @@ enum feat : std::size_t {
   eClusterX,
   eClusterY
 };
-
-std::vector<std::vector<int>>
-ActsExamples::TrackFindingAlgorithmExaTrkXTriton::getTracks(
-    std::vector<float>& features, std::vector<int>& spacepointIDs,
-    const std::size_t& numSpacepoints, const std::size_t& numFeatures) const {
-  // ************
-  // TrackFinding
-  // ************
-  std::vector<int64_t> embedInputShape{numSpacepoints, numFeatures};
-
-  m_client->ClearInput();
-  m_client->AddInput<float>("FEATURES", embedInputShape, features);
-  std::vector<int64_t> trackLabels;
-  std::vector<int64_t> trackLabelsShape{numSpacepoints, 1};
-  m_client->GetOutput<int64_t>("LABELS", trackLabels, trackLabelsShape);
-
-  std::vector<std::vector<int>> trackCandidates;
-  if (trackLabels.size() == 0){
-      return trackCandidates;
-  }
-
-  int existTrkIdx = 0;
-  // map labeling from MCC to customized track id.
-  std::map<int32_t, int32_t> trackLableToIds;
-
-  for (int32_t idx = 0; idx < numSpacepoints; ++idx) {
-    int32_t trackLabel = trackLabels[idx];
-    int spacepointID = spacepointIDs[idx];
-
-    int trkId;
-    if (trackLableToIds.find(trackLabel) != trackLableToIds.end()) {
-      trkId = trackLableToIds[trackLabel];
-      trackCandidates[trkId].push_back(spacepointID);
-    } else {
-      // a new track, assign the track id
-      // and create a vector
-      trkId = existTrkIdx;
-      trackCandidates.push_back(std::vector<int>{spacepointID});
-      trackLableToIds[trackLabel] = trkId;
-      existTrkIdx++;
-    }
-  }
-
-  return trackCandidates;
-}
 
 ActsExamples::ProcessCode
 ActsExamples::TrackFindingAlgorithmExaTrkXTriton::execute(
@@ -302,10 +254,7 @@ ActsExamples::TrackFindingAlgorithmExaTrkXTriton::execute(
   ACTS_DEBUG("Avg activation: " << sumActivation / sumCells);
 
   // Run the pipeline
-  const auto trackCandidates =
-      m_use_triton
-          ? getTracks(features, spacepointIDs, numSpacepoints, numFeatures)
-          : m_pipeline.run(features, spacepointIDs, *hook);
+  const auto trackCandidates = m_use_triton? m_infer->getTracks(features, spacepointIDs) : m_pipeline.run(features, spacepointIDs, *hook);
 
   ACTS_DEBUG("Done with pipeline, received " << trackCandidates.size()
                                             << " candidates");

@@ -18,7 +18,7 @@
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/DataHandle.hpp"
 #include "ActsExamples/Framework/IAlgorithm.hpp"
-#include "ActsExamples/TrackFindingExaTrkXTriton/ExaTrkXTriton.hpp"
+#include "ActsExamples/TrackFindingExaTrkXTriton/ExaTrkXTrackFindingTriton.hpp"
 
 #include <string>
 #include <vector>
@@ -112,7 +112,7 @@ class TrackFindingAlgorithmExaTrkXTriton final : public IAlgorithm {
   WriteDataHandle<ProtoTrackContainer> m_outputProtoTracks{this,
                                                            "OutputProtoTracks"};
   // for triton inference
-  std::unique_ptr<ExaTrkXTriton> m_client;
+  std::unique_ptr<ExaTrkXTrackFindingTriton> m_infer;
 
   // for truth graph
   ReadDataHandle<SimHitContainer> m_inputSimHits{this, "InputSimHits"};

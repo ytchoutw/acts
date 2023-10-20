@@ -1,6 +1,7 @@
 add_library(
   ActsExamplesTrackFindingExaTrkXTriton SHARED
   src/TrackFindingAlgorithmExaTrkXTriton.cpp
+  src/ExaTrkXTrackFindingTriton.cpp
 )
 
 target_include_directories(
@@ -13,7 +14,6 @@ target_link_libraries(
   PUBLIC
     ActsPluginExaTrkX
     ActsExamplesFramework
-  PRIVATE
     libgrpcclient.so
     libprotobuf.a    
 )
