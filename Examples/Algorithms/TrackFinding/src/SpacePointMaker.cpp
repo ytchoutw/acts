@@ -119,7 +119,21 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
     const AlgorithmContext& ctx) const {
   const auto& sourceLinks = m_inputSourceLinks(ctx);
   const auto& measurements = m_inputMeasurements(ctx);
+  const auto& gctx = ctx.geoContext;
 
+  SimSpacePointContainer spacePoints;
+  executeSpacePointsMaker(measurements, sourceLinks, gctx, spacePoints);
+
+  m_outputSpacePoints(ctx, std::move(spacePoints));
+
+  return ActsExamples::ProcessCode::SUCCESS;
+}
+
+ActsExamples::ProcessCode ActsExamples::SpacePointMaker::executeSpacePointsMaker(
+  const std::vector<Measurement>& measurements,
+  const GeometryIdMultiset<IndexSourceLink>& sourceLinks,
+  const Acts::GeometryContext& geoContext,
+  SimSpacePointContainer& spacePoints) const {
   // TODO Support strip measurements
   Acts::SpacePointBuilderOptions spOpt;
 
@@ -138,7 +152,7 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
         meas);
   };
 
-  SimSpacePointContainer spacePoints;
+
   for (Acts::GeometryIdentifier geoId : m_cfg.geometrySelection) {
     // select volume/layer depending on what is set in the geometry id
     auto range = selectLowestNonZeroGeometryObject(sourceLinks, geoId);
@@ -149,16 +163,13 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
     for (auto [moduleGeoId, moduleSourceLinks] : groupedByModule) {
       for (auto& sourceLink : moduleSourceLinks) {
         m_spacePointBuilder.buildSpacePoint(
-            ctx.geoContext, {Acts::SourceLink{sourceLink}}, spOpt,
+            geoContext, {Acts::SourceLink{sourceLink}}, spOpt,
             std::back_inserter(spacePoints));
       }
     }
   }
 
   spacePoints.shrink_to_fit();
-
   ACTS_DEBUG("Created " << spacePoints.size() << " space points");
-  m_outputSpacePoints(ctx, std::move(spacePoints));
-
   return ActsExamples::ProcessCode::SUCCESS;
 }
