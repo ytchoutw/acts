@@ -129,11 +129,12 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
   return ActsExamples::ProcessCode::SUCCESS;
 }
 
-ActsExamples::ProcessCode ActsExamples::SpacePointMaker::executeSpacePointsMaker(
-  const std::vector<Measurement>& measurements,
-  const GeometryIdMultiset<IndexSourceLink>& sourceLinks,
-  const Acts::GeometryContext& geoContext,
-  SimSpacePointContainer& spacePoints) const {
+ActsExamples::ProcessCode
+ActsExamples::SpacePointMaker::executeSpacePointsMaker(
+    const std::vector<Measurement>& measurements,
+    const GeometryIdMultiset<IndexSourceLink>& sourceLinks,
+    const Acts::GeometryContext& geoContext,
+    SimSpacePointContainer& spacePoints) const {
   // TODO Support strip measurements
   Acts::SpacePointBuilderOptions spOpt;
 
@@ -151,7 +152,6 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::executeSpacePointsMaker
         },
         meas);
   };
-
 
   for (Acts::GeometryIdentifier geoId : m_cfg.geometrySelection) {
     // select volume/layer depending on what is set in the geometry id

@@ -183,6 +183,56 @@ ActsExamples::ClusterContainer makeClusters(
 
 ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
     const ActsExamples::AlgorithmContext& ctx) {
+  
+  size_t eventNumber = ctx.eventNumber;
+  std::string inputDir = m_cfg.inputDir;
+  GeometryIdMultimap<Measurement> orderedMeasurements;
+  IndexMultimap<Index> measurementSimHitsMap;
+  IndexSourceLinkContainer sourceLinks;
+  MeasurementContainer measurements;
+
+  // Read the measurements
+  readMeasurement(inputDir, eventNumber, orderedMeasurements, measurementSimHitsMap, 
+                  sourceLinks, measurements);
+
+
+  // Generate measurment-particles-map
+  if (m_inputHits.isInitialized() &&
+      m_outputMeasurementParticlesMap.isInitialized()) {
+    const auto hits = m_inputHits(ctx);
+
+    IndexMultimap<ActsFatras::Barcode> outputMap;
+
+    readMeasurementParticlesMap(measurementSimHitsMap, hits, outputMap);
+
+    m_outputMeasurementParticlesMap(ctx, std::move(outputMap));
+  }
+
+  // Write the data to the EventStore
+  m_outputMeasurements(ctx, std::move(measurements));
+  m_outputMeasurementSimHitsMap(ctx, std::move(measurementSimHitsMap));
+  m_outputSourceLinks(ctx, std::move(sourceLinks));
+
+  /////////////////////////
+  // Cluster information //
+  /////////////////////////
+
+  if (!m_cfg.outputClusters.empty()) {
+    auto clusters = readClusterInfo(inputDir, eventNumber, orderedMeasurements);
+    m_outputClusters(ctx, std::move(clusters));
+  }
+
+  return ActsExamples::ProcessCode::SUCCESS;
+}
+
+
+ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::readMeasurement(
+  const std::string& inputDir,
+  size_t eventNumber,
+  GeometryIdMultimap<Measurement>& orderedMeasurements,
+  IndexMultimap<Index>& measurementSimHitsMap,
+  IndexSourceLinkContainer& sourceLinks,
+  MeasurementContainer& measurements) {
   // hit_id in the files is not required to be neither continuous nor
   // monotonic. internally, we want continuous indices within [0,#hits)
   // to simplify data handling. to be able to perform this mapping we first
@@ -190,13 +240,10 @@ ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
   // types.
   //
   // Note: the cell data is optional
-  auto measurementData =
-      readMeasurementsByGeometryId(m_cfg.inputDir, ctx.eventNumber);
 
-  // Prepare containers for the hit data using the framework event data types
-  GeometryIdMultimap<Measurement> orderedMeasurements;
-  IndexMultimap<Index> measurementSimHitsMap;
-  IndexSourceLinkContainer sourceLinks;
+  auto measurementData =
+      readMeasurementsByGeometryId(inputDir, eventNumber);
+
   // need list here for stable addresses
   std::list<IndexSourceLink> sourceLinkStorage;
   orderedMeasurements.reserve(measurementData.size());
@@ -206,7 +253,7 @@ ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
 
   auto measurementSimHitLinkData =
       readEverything<ActsExamples::MeasurementSimHitLink>(
-          m_cfg.inputDir, "measurement-simhit-map.csv", {}, ctx.eventNumber);
+          inputDir, "measurement-simhit-map.csv", {}, eventNumber);
   for (auto mshLink : measurementSimHitLinkData) {
     measurementSimHitsMap.emplace_hint(measurementSimHitsMap.end(),
                                        mshLink.measurement_id, mshLink.hit_id);
@@ -268,38 +315,29 @@ ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
     sourceLinks.insert(sourceLinks.end(), std::cref(sourceLink));
   }
 
-  MeasurementContainer measurements;
   for (auto& [_, meas] : orderedMeasurements) {
     measurements.emplace_back(std::move(meas));
   }
 
-  // Generate measurment-particles-map
-  if (m_inputHits.isInitialized() &&
-      m_outputMeasurementParticlesMap.isInitialized()) {
-    const auto hits = m_inputHits(ctx);
+  return ProcessCode::SUCCESS;
+}
 
-    IndexMultimap<ActsFatras::Barcode> outputMap;
 
-    for (const auto& [measIdx, hitIdx] : measurementSimHitsMap) {
-      const auto& hit = hits.nth(hitIdx);
-      outputMap.emplace(measIdx, hit->particleId());
-    }
-
-    m_outputMeasurementParticlesMap(ctx, std::move(outputMap));
+ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::readMeasurementParticlesMap(
+  const IndexMultimap<Index>& measurementSimHitsMap, 
+  const SimHitContainer& hits, 
+  IndexMultimap<ActsFatras::Barcode>& outputMap){
+  for (const auto& [measIdx, hitIdx] : measurementSimHitsMap) {
+    const auto& hit = hits.nth(hitIdx);
+    outputMap.emplace(measIdx, hit->particleId());
   }
+  return ProcessCode::SUCCESS;
+}
 
-  // Write the data to the EventStore
-  m_outputMeasurements(ctx, std::move(measurements));
-  m_outputMeasurementSimHitsMap(ctx, std::move(measurementSimHitsMap));
-  m_outputSourceLinks(ctx, std::move(sourceLinks));
-
-  /////////////////////////
-  // Cluster information //
-  /////////////////////////
-
-  if (m_cfg.outputClusters.empty()) {
-    return ActsExamples::ProcessCode::SUCCESS;
-  }
+ActsExamples::ClusterContainer ActsExamples::CsvMeasurementReader::readClusterInfo(
+  const std::string& inputDir,
+  size_t eventNumber,
+  const GeometryIdMultimap<Measurement>& orderedMeasurements){
 
   std::vector<ActsExamples::CellData> cellData;
 
@@ -307,7 +345,7 @@ ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
   // the measurment_id-column is still named hit_id
   try {
     cellData = readEverything<ActsExamples::CellData>(
-        m_cfg.inputDir, "cells.csv", {"timestamp"}, ctx.eventNumber);
+        inputDir, "cells.csv", {"timestamp"}, eventNumber);
   } catch (std::runtime_error& e) {
     // Rethrow exception if it is not about the measurement_id-column
     if (std::string(e.what()).find("Missing header column 'measurement_id'") ==
@@ -316,7 +354,7 @@ ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
     }
 
     const auto oldCellData = readEverything<ActsExamples::CellDataLegacy>(
-        m_cfg.inputDir, "cells.csv", {"timestamp"}, ctx.eventNumber);
+        inputDir, "cells.csv", {"timestamp"}, eventNumber);
 
     auto fromLegacy = [](const CellDataLegacy& old) {
       return CellData{old.geometry_id, old.hit_id,    old.channel0,
@@ -333,8 +371,5 @@ ActsExamples::ProcessCode ActsExamples::CsvMeasurementReader::read(
     cellDataMap.emplace(cd.measurement_id, cd);
   }
 
-  auto clusters = makeClusters(cellDataMap, orderedMeasurements.size());
-  m_outputClusters(ctx, std::move(clusters));
-
-  return ActsExamples::ProcessCode::SUCCESS;
+  return makeClusters(cellDataMap, orderedMeasurements.size());
 }

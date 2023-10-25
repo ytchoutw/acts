@@ -86,6 +86,22 @@ class CsvMeasurementReader final : public IReader {
   /// Read out data from the input stream.
   ProcessCode read(const ActsExamples::AlgorithmContext& ctx) override;
 
+  ProcessCode readMeasurement(
+    const std::string& inputDir, size_t eventNumber,
+    GeometryIdMultimap<Measurement>& orderedMeasurements,
+    IndexMultimap<Index>& measurementSimHitsMap,
+    IndexSourceLinkContainer& sourceLinks,
+    MeasurementContainer& measurements);
+
+  ProcessCode readMeasurementParticlesMap(
+    const IndexMultimap<Index>& measurementSimHitsMap, 
+    const SimHitContainer& hits, 
+    IndexMultimap<ActsFatras::Barcode>& outputMap);
+
+  ClusterContainer readClusterInfo(
+      const std::string& inputDir, size_t eventNumber,
+      const GeometryIdMultimap<Measurement>& orderedMeasurements);
+
   /// Readonly access to the config
   const Config& config() const { return m_cfg; }
 

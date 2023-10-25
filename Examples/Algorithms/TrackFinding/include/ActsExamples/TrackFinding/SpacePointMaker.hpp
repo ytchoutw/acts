@@ -75,13 +75,13 @@ class SpacePointMaker final : public IAlgorithm {
   /// @return a process code indication success or failure
   ProcessCode execute(const AlgorithmContext& ctx) const override;
 
-  /// The function to call buildSpacePoint, factorized out. 
+  /// The function to call buildSpacePoint, factorized out.
   ProcessCode executeSpacePointsMaker(
-    const std::vector<Measurement>& measurements,
-    const GeometryIdMultiset<IndexSourceLink>& sourceLinks,
-    const Acts::GeometryContext& geoContext,
-    SimSpacePointContainer& spacePoints) const;
-                             
+      const std::vector<Measurement>& measurements,
+      const GeometryIdMultiset<IndexSourceLink>& sourceLinks,
+      const Acts::GeometryContext& geoContext,
+      SimSpacePointContainer& spacePoints) const;
+
   /// Const access to the config
   const Config& config() const { return m_cfg; }
 
