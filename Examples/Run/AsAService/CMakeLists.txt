@@ -19,6 +19,9 @@ target_link_libraries(
     ActsExamplesTrackFitting
     ActsPluginExaTrkX
     ActsExamplesIoCsv
+    ActsExamplesDetectorDD4hep
+    ActsExamplesIoRoot
+    ActsExamplesIoJson
 )
 
 install(
@@ -38,4 +41,8 @@ target_link_libraries(
     ActsExamplesTrackFinding 
     ActsExamplesTrackFitting 
     ActsPluginExaTrkX
-    ActsExamplesIoCsv)
+    ActsExamplesIoCsv
+    ActsExamplesDetectorDD4hep
+    ActsExamplesIoRoot
+    ActsExamplesIoJson
+    )

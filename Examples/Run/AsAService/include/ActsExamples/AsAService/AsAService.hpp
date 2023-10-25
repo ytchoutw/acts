@@ -9,6 +9,5 @@
 #pragma once
 
 namespace ActsExamples {
-class ActsAsAService final {
-};
+class ActsAsAService final {};
 }  // namespace ActsExamples

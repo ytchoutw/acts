@@ -16,6 +16,7 @@
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
 #include "ActsExamples/TrackFinding/SpacePointMaker.hpp"
+
 #include <numeric>
 
 using namespace ActsExamples;
