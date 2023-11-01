@@ -17,6 +17,7 @@
 #include "ActsExamples/Framework/WhiteBoard.hpp"
 #include "ActsExamples/TrackFindingExaTrkXTriton/ExaTrkXTrackFindingTriton.hpp"
 
+#include <chrono>
 #include <numeric>
 
 using namespace ActsExamples;
@@ -253,11 +254,18 @@ ActsExamples::TrackFindingAlgorithmExaTrkXTriton::execute(
   ACTS_DEBUG("Avg cell count: " << sumCells / spacepoints.size());
   ACTS_DEBUG("Avg activation: " << sumActivation / sumCells);
 
+  std::chrono::steady_clock::time_point t_begin = std::chrono::steady_clock::now();
   // Run the pipeline
   const auto trackCandidates = m_use_triton? m_infer->getTracks(features, spacepointIDs) : m_pipeline.run(features, spacepointIDs, *hook);
+  
+  std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
+
+  ACTS_INFO("Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_begin).count() << "[ms]");
 
   ACTS_DEBUG("Done with pipeline, received " << trackCandidates.size()
                                             << " candidates");
+
+
 
   // Make the prototracks
   std::vector<ProtoTrack> protoTracks;
