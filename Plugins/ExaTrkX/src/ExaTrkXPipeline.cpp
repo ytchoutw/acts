@@ -35,6 +35,21 @@ ExaTrkXPipeline::ExaTrkXPipeline(
 std::vector<std::vector<int>> ExaTrkXPipeline::run(
     std::vector<float> &features, std::vector<int> &spacepointIDs,
     const ExaTrkXHook &hook) const {
+
+  // Looks good
+  // std::cout << "DEBUG::inputValues\n";
+  // for (auto &ip : features) {
+  //   std::cout << " " << ip;
+  // }
+  // std::cout << std::endl;
+
+  // std::cout << "DEBUG::spacepointIDs";
+  // for (auto &id : spacepointIDs) {
+  //   std::cout << " " << id;
+  // }
+  // std::cout << std::endl;
+  //
+
   auto [nodes, edges] = (*m_graphConstructor)(features, spacepointIDs.size());
 
   hook(nodes, edges);

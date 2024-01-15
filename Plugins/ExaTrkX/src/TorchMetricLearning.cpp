@@ -95,6 +95,12 @@ std::tuple<std::any, std::any> TorchMetricLearning::operator()(
              << inputTensors[0].toTensor().size(0) << ", "
              << inputTensors[0].toTensor().size(1));
 
+  std::cout << "DEBUG::Embedding::eInputTensorJit:\n";
+  for (auto it : inputTensors) {
+    std::cout << " " << it;
+  }
+  std::cout << std::endl;
+
   auto output = model.forward(inputTensors).toTensor();
 
   ACTS_VERBOSE("Embedding space of the first SP:\n"
@@ -108,9 +114,13 @@ std::tuple<std::any, std::any> TorchMetricLearning::operator()(
   auto edgeList = detail::buildEdges(output, m_cfg.rVal, m_cfg.knnVal,
                                      m_cfg.shuffleDirections);
 
+  ACTS_VERBOSE("Hyperparameters rVal: "
+               << m_cfg.rVal << ", m_cfg.knnVal: " << m_cfg.knnVal
+               << ", shuffleDirections: " << m_cfg.shuffleDirections << "\n")
+
   ACTS_VERBOSE("Shape of built edges: (" << edgeList.size(0) << ", "
                                          << edgeList.size(1));
-  ACTS_VERBOSE("Slice of edgelist:\n" << edgeList.slice(1, 0, 5));
+  ACTS_VERBOSE("Slice of edgelist:\n" << edgeList.slice(1, 0, 30));
   printCudaMemInfo(logger());
 
   return {std::move(inputTensors[0]).toTensor(), std::move(edgeList)};

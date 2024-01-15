@@ -82,10 +82,14 @@ std::tuple<std::any, std::any, std::any> TorchEdgeClassifier::operator()(
     output = output.index({Slice(None, output.size(0) / 2)});
   }
 
+  std::cout << "fOutput:\n" << output << std::endl;
+
   ACTS_VERBOSE("Size after classifier: " << output.size(0));
   ACTS_VERBOSE("Slice of classified output:\n"
                << output.slice(/*dim=*/0, /*start=*/0, /*end=*/9));
   printCudaMemInfo(logger());
+
+  ACTS_VERBOSE("Hyperparameters filterCut: " << m_cfg.cut);
 
   torch::Tensor mask = output > m_cfg.cut;
   torch::Tensor edgesAfterCut = edgeList.index({Slice(), mask});

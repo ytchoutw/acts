@@ -208,6 +208,7 @@ ActsExamples::TrackFindingAlgorithmExaTrkXTriton::execute(
   const std::size_t numSpacepoints = spacepoints.size();
   const std::size_t numFeatures = clusters ? 7 : 3;
   ACTS_INFO("Received " << numSpacepoints << " spacepoints");
+  ACTS_INFO("Received " << numFeatures << " features");
 
   std::vector<float> features(numSpacepoints * numFeatures);
   std::vector<int> spacepointIDs;
@@ -257,14 +258,20 @@ ActsExamples::TrackFindingAlgorithmExaTrkXTriton::execute(
   std::chrono::steady_clock::time_point t_begin = std::chrono::steady_clock::now();
   // Run the pipeline
   const auto trackCandidates = m_use_triton? m_infer->getTracks(features, spacepointIDs) : m_pipeline.run(features, spacepointIDs, *hook);
-  
+
+  for (int i = 0; i < trackCandidates.size(); i++) {
+    for (int j = 0; j < trackCandidates[i].size(); j++) {
+      std::cout << trackCandidates[i][j] << " ";
+    }
+    std::cout << std::endl;
+  }
+
   std::chrono::steady_clock::time_point t_end = std::chrono::steady_clock::now();
 
   ACTS_INFO("Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_begin).count() << "[ms]");
 
   ACTS_DEBUG("Done with pipeline, received " << trackCandidates.size()
                                             << " candidates");
-
 
 
   // Make the prototracks
